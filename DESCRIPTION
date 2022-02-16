@@ -1,0 +1,13 @@
+Package: SmartModelApp
+Title: Smart Model by BeSmart
+Version: 0.0.0.9000
+Authors@R: person('Sebastian', 'Ferro', email = 'besmart.company', role = c('cre', 'aut'))
+Description: Credit Scoring Modelling Automation
+License: MIT + file LICENSE
+Imports: 
+    config (>= 0.3.1),
+    golem (>= 0.3.1),
+    shiny (>= 1.7.1)
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
