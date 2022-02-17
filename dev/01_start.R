@@ -41,6 +41,7 @@ usethis::use_news_md( open = FALSE )
 
 ## Use git ----
 usethis::use_git()
+usethis::use_github()
 
 ## Init Testing Infrastructure ----
 ## Create a template for tests
