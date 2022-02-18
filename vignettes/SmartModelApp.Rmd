@@ -1,0 +1,21 @@
+---
+title: "SmartModelApp"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SmartModelApp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(SmartModelApp)
+```
+
+Aquí irá una breve introducción a Smart Model. 

@@ -5,21 +5,174 @@
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
 #' @noRd 
-#'
+#' 
+#' @import gt
 #' @importFrom shiny NS tagList 
 mod_Lectura_ui <- function(id){
   ns <- NS(id)
   tagList(
- 
-  )
+    tabsetPanel(id = "menu", header = version_app,
+    tabPanel("Subida", br(), 
+             titlePanel("Subida de Archivos"), br(),
+             fileInput(ns("upload_datos"), "Seleccionar archivos .csv de datos ", buttonLabel = "Subir...",
+                       multiple = TRUE, accept = ".csv", placeholder = "archivos no seleccionados" ),
+             fileInput(ns("upload_param"), "Seleccionar el archivo .xlsx de parámetros ", buttonLabel = "Subir...",
+                       multiple = FALSE, accept = ".xlsx", placeholder = "archivo no seleccionado" ), 
+             fileInput(ns("template"), "Seleccionar el template .Rmd para generar el Reporte ", buttonLabel = "Subir...",
+                       multiple = T, accept = ".Rmd", placeholder = "archivo no seleccionado" ), 
+             br(), gt::gt_output(ns("files_datos")), br(), gt::gt_output(ns("file_param"))
+             ), # tabPanel
+    tabPanel("Lectura", br(),
+           titlePanel("Lectura de Archivos"), br(),
+           fluidRow(
+             column(4,
+                    p("Se asume que todos los archivos de datos son csv separados por ',', con nombres de columna."), br(), 
+                    p("Si los archivos no cumplen los formatos especificados se advierte a continuación."), br(),
+                    textOutput(ns("read_res_txt")), br(), br(), 
+                    p("Nro. de filas leídas del archivo de datos"),
+                    gt::gt_output(ns("read_res_datos"))
+             ),
+             column(8,
+                    p("Parámetros cargados"), 
+                    gt::gt_output(ns("read_res_param"))
+             )
+           )
+           ) # tabPanel
+    ) # tabsetPanel
+  ) # tagList
 }
     
 #' Lectura Server Functions
 #'
 #' @noRd 
-mod_Lectura_server <- function(id){
+mod_Lectura_server <- function(id, r){
+  
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    r$reading_success <- FALSE
+    
+    output$files_datos <- gt::render_gt({
+      req(credentials()$user_auth)
+      req(input$upload_datos)
+      input$upload_datos |> select(name, size) |> gt() |>
+        gt::tab_header("Archivos de Datos") |>
+        gt::cols_label(name="Nombre", size="Tamaño")
+    })
+    
+    output$files_param <- gt::render_gt({
+      req(credentials()$user_auth)
+      req(input$upload_param)
+      input$upload_param |> select(name, size) |> gt() |>
+        gt::tab_header("Archivo de Parámetros") |>
+        gt::cols_label(name="Nombre", size="Tamaño")
+    })
+    
+    df_work <- reactive({
+      req(credentials()$user_auth)
+      req(input$upload_datos)
+      id <- showNotification("Leyendo Archivos.  Espere!", duration = NULL, closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
+      vroom::vroom(input$upload_datos$datapath,
+                   delim = data_source_delim, escape_double = FALSE, id = "source_file", 
+                   trim_ws = TRUE)
+      input$upload_datos$datapath |> 
+        vroom::vroom(delim = data_source_delim, escape_double = FALSE, trim_ws = TRUE, 
+                     show_col_types = F)
+    })
+    
+    reading_problems <- reactive({df_work() |> vroom::problems()})
+    
+    df_Param <- reactive({
+      req(credentials()$user_auth)
+      req(input$upload_param)
+      id <- showNotification("Leyendo Archivos.  Espere!", duration = NULL, closeButton = FALSE)
+      on.exit(removeNotification(id), add = TRUE)
+      input$upload_param$datapath |> readxl::read_excel(sheet = 'Valid', range = "A6:D20") |> 
+        rename(parameter=`Parámetro`, value=Valor, type=Tipo) |> 
+        filter(!is.na(parameter) & !is.na(type)) 
+    })
+    
+    tab_niv <- reactive({
+      req(credentials()$user_auth)
+      req(input$upload_param)
+      req(df_Param())
+      input$upload_param$datapath |> 
+        load_range('Valid', 
+                   df_Param() |> filter(parameter == "par_rango_niveles") |> pull(value), 
+                   c("Nombre Nivel", "Regla", "Tasa de malos máxima"), 
+                   c("level_name", "rule", "mx_allwd_br")) |> 
+        arrange(level_order) |> mutate(mn_allwd_br = lag(mx_allwd_br, default = 0)) |> 
+        rename(TM_min = mn_allwd_br, TM_max = mx_allwd_br) 
+    })
+    
+    tab_seg <- reactive({
+      req(credentials()$user_auth)
+      req(input$upload_param)
+      req(df_Param())
+      input$upload_param$datapath |> 
+        load_range('Valid', 
+                   df_Param() |> filter(parameter == "par_rango_segmentos") |> pull(value), 
+                   c("Nombre Segmento", "Regla"), c("level_name", "rule"))
+    })
+    
+    tab_rep <- reactive({
+      req(credentials()$user_auth)
+      req(input$upload_param)
+      req(df_Param())
+      input$upload_param$datapath |> 
+        load_range('Valid', 
+                   df_Param() |> filter(parameter == "par_rango_reportes") |> pull(value), 
+                   c("Variables de corte"), c("report_name"))
+    })
+    
+    reading_success <- reactive({
+      validate(need(df_Param() |> filter(! type %in% c('list', 'numeric', 'string')) |> plyr::empty(), 
+                    label = "Los Tipos admitidos son list, numeric o string."))
+      validate(need(df_Param() |> filter(! type %in% c('list', 'numeric', 'string')) |> plyr::empty(), 
+                    label = "Los Tipos admitidos son list, numeric o string."))
+      validate(need(df_Param() |> filter(parameter %in% c('project_title', 'par_ids', 'par_target', 
+                                                          'par_perf_bins', 'par_rango_niveles', 'par_rango_segmentos', 'par_rango_reportes', 
+                                                          'par_cant_reportes', 'par_times')) |> summarise(q=n()) |> mutate(check = (q == 9)) |> 
+                      pull(check), label = 'Parámetros incorrectos o faltantes.'))
+      validate(need(tab_niv() |> pull(TM_max) |> check_sorted_score_levels(), 
+                    label = "tabla de niveles de score no ordenada!"))
+      validate(need(reading_problems() |> plyr::empty(), 
+                    label = paste("Problemas en lectura de archivo de datos", reading_problems())))
+      req(tab_rep())
+      req(tab_seg())
+      req(input$template)
+      r$src <- normalizePath(input$template$datapath)
+      r$df_Param <- df_Param()
+      r$df_work <- df_work()
+      r$tab_niv <- tab_niv() 
+      r$tab_rep <- tab_rep()
+      r$tab_seg <- tab_seg()
+      r$reading_success <- TRUE
+      TRUE
+    })
+    
+    output$read_res_txt <- renderText({
+      if (!reading_success()) "Hubo problemas leyendo los archivos!"
+      else "Lectura exitosa! Cantidad de registros leídos y tabla de parámetros cargados"
+    })
+    
+    output$read_res_param <- gt::render_gt({
+      req(reading_success())
+      df_Param() |> gt() |> 
+        gt::cols_label(parameter="Parámetro", value="Valor") 
+    })
+    
+    output$read_res_datos <- gt::render_gt({
+      req(reading_success())
+      df_work() |> 
+        group_by(status = all_of(df_Param() |> filter(parameter == "par_target") |> pull(value))) |> 
+        count() |> 
+        gt(groupname_col = NA) |> 
+        gt::cols_label(status="Target", n="# Mediciones") |> 
+        grand_summary_rows(columns = n, fns = list(Total = ~sum(.)), 
+                           formatter = fmt_number, decimals = 0)
+    })
  
   })
 }

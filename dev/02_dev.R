@@ -17,6 +17,17 @@
 ## Add one line by package you want to add as dependency
 usethis::use_package( "thinkr" )
 
+golem::use_recommended_deps()
+usethis::use_package( "shinyjs" )
+usethis::use_package( "shinyauthr" )
+usethis::use_package( "vroom" )
+usethis::use_package( "readxl" )
+usethis::use_package( "plyr" )
+usethis::use_package( "gt" )
+
+attachment::att_from_rscripts()
+
+
 ## Add modules ----
 ## Create a module infrastructure in R/
 golem::add_module( name = "name_of_module1" ) # Name of the module

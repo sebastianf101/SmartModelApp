@@ -24,7 +24,7 @@ golem::fill_desc(
   pkg_description = "Credit Scoring Modelling Automation", # The Description of the package containing the App 
   author_first_name = "Sebastian", # Your First Name
   author_last_name = "Ferro", # Your Last Name
-  author_email = "besmart.company", # Your Email
+  author_email = "sferro@besmart.com", # Your Email
   repo_url = NULL # The URL of the GitHub Repo (optional) 
 )     
 
