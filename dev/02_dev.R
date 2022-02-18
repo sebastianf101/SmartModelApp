@@ -18,15 +18,19 @@
 usethis::use_package( "thinkr" )
 
 golem::use_recommended_deps()
-usethis::use_package( "shinyjs" )
-usethis::use_package( "shinyauthr" )
-usethis::use_package( "vroom" )
-usethis::use_package( "readxl" )
-usethis::use_package( "plyr" )
-usethis::use_package( "gt" )
+usethis::use_package("shinyjs")
+usethis::use_package("shinyauthr")
+usethis::use_package("vroom")
+usethis::use_package("readxl")
+usethis::use_package("plyr")
+usethis::use_package("dplyr")
+usethis::use_package("gt")
+usethis::use_package("rlang")
+usethis::use_package("rmarkdown")
+
 
 attachment::att_from_rscripts()
-
+attachment::att_from_rscripts() |> purrr::map(usethis::use_package)
 
 ## Add modules ----
 ## Create a module infrastructure in R/
@@ -50,6 +54,14 @@ golem::add_css_file( "custom" )
 ## If you have data in your package
 usethis::use_data_raw( name = "my_dataset", open = FALSE ) 
 
+user_base <- readr::read_rds("user_base.rds")
+
+usethis::use_data_raw( name = "user_base", open = FALSE ) 
+# √ Creating 'data-raw/'
+# √ Writing 'data-raw/user_base.R'
+# * Finish the data preparation script in 'data-raw/user_base.R'
+# * Use `usethis::use_data()` to add prepared data to package
+
 ## Tests ----
 ## Add one line by test you want to create
 usethis::use_test( "app" )
@@ -59,6 +71,7 @@ usethis::use_test( "app" )
 ## Vignette ----
 usethis::use_vignette("SmartModelApp")
 devtools::build_vignettes()
+devtools::document()
 
 ## Code Coverage----
 ## Set the code coverage service ("codecov" or "coveralls")

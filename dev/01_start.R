@@ -21,12 +21,16 @@
 golem::fill_desc(
   pkg_name = "SmartModelApp", # The Name of the package containing the App 
   pkg_title = "Smart Model by BeSmart", # The Title of the package containing the App 
-  pkg_description = "Credit Scoring Modelling Automation", # The Description of the package containing the App 
+  pkg_description = "Credit Scoring Modelling Automation
+    Product Owned by BeSmart Argentina S.A. ", # The Description of the package containing the App 
   author_first_name = "Sebastian", # Your First Name
   author_last_name = "Ferro", # Your Last Name
   author_email = "sferro@besmart.com", # Your Email
   repo_url = NULL # The URL of the GitHub Repo (optional) 
 )     
+
+golem::get_golem_version()
+golem::set_golem_version(version = "0.90")
 
 ## Set {golem} options ----
 golem::set_golem_options()
