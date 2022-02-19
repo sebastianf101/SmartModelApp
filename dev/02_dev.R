@@ -27,6 +27,7 @@ usethis::use_package("dplyr")
 usethis::use_package("gt")
 usethis::use_package("rlang")
 usethis::use_package("rmarkdown")
+usethis::use_package("magrittr")
 
 
 attachment::att_from_rscripts()

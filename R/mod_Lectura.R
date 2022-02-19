@@ -56,6 +56,7 @@ mod_Lectura_ui <- function(id){
 #' @noRd 
 mod_Lectura_server <- function(id, r){
   
+#  var_lectura <- 3 # Debug
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -105,13 +106,17 @@ mod_Lectura_server <- function(id, r){
     func_aux_succes <- reactive({
       id <- showNotification("Cargando funciones auxiliares.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-      input$func_aux$datapath |> source(verbose = F)
+#      var_func_aux <- 4
+#      browser() # Debug      
+      input$func_aux$datapath |> sys.source(keep.source = F, envir = topenv())
     }) |> bindEvent(input$func_aux$datapath, r$auth)
 
     func_utils_succes <- reactive({
       id <- showNotification("Cargando utilidades para reportes.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-      input$func_utils$datapath |> source(verbose = F)
+#      var_func_utils <- 5  # Debug
+      input$func_utils$datapath |> sys.source(keep.source = F, envir = topenv())
+#      browser() # Debug
     }) |> bindEvent(input$func_utils$datapath, r$auth)
     
     df_work <- reactive({
@@ -119,9 +124,6 @@ mod_Lectura_server <- function(id, r){
       req(input$upload_datos)
       id <- showNotification("Leyendo Archivos.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-      vroom::vroom(input$upload_datos$datapath,
-                   delim = data_source_delim, escape_double = FALSE, id = "source_file", 
-                   trim_ws = TRUE)
       input$upload_datos$datapath |> 
         vroom::vroom(delim = data_source_delim, escape_double = FALSE, trim_ws = TRUE, 
                      show_col_types = F)

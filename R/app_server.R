@@ -1,3 +1,4 @@
+# var_instancia <- 1  # Debug
 
 #' The application server-side
 #' 
@@ -8,6 +9,7 @@
 #' @import gt
 #' 
 #' @importFrom rlang .data
+#' @importFrom magrittr %>%
 #' @importFrom shinyauthr login logout
 #' @importFrom vroom vroom
 #' @importFrom readxl read_excel
@@ -19,6 +21,8 @@ app_server <- function( input, output, session ) {
 
   # golem::cat_dev("Verifico que leyó user_base \n")
   # golem::cat_dev(user_base$user, "\n")
+  sesion_env <- rlang::current_env() # Debug
+  var_sesion <- 2  # Debug
   
   r <- reactiveValues()
   # auth
