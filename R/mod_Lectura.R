@@ -56,7 +56,6 @@ mod_Lectura_ui <- function(id){
 #' @noRd 
 mod_Lectura_server <- function(id, r){
   
-#  var_lectura <- 3 # Debug
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -103,21 +102,23 @@ mod_Lectura_server <- function(id, r){
         cols_label(name="Nombre", size="Tamaño")
     })
     
-    func_aux_succes <- reactive({
+    func_aux_success <- reactive({
+      req(r$auth)
+      req(input$func_aux$datapath)
       id <- showNotification("Cargando funciones auxiliares.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-#      var_func_aux <- 4
-#      browser() # Debug      
       input$func_aux$datapath |> sys.source(keep.source = F, envir = topenv())
-    }) |> bindEvent(input$func_aux$datapath, r$auth)
+      TRUE      
+    }) 
 
-    func_utils_succes <- reactive({
+    func_utils_success <- reactive({
+      req(r$auth)
+      req(input$func_utils$datapath)
       id <- showNotification("Cargando utilidades para reportes.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-#      var_func_utils <- 5  # Debug
       input$func_utils$datapath |> sys.source(keep.source = F, envir = topenv())
-#      browser() # Debug
-    }) |> bindEvent(input$func_utils$datapath, r$auth)
+      TRUE
+    })
     
     df_work <- reactive({
       req(r$auth)
@@ -141,10 +142,18 @@ mod_Lectura_server <- function(id, r){
         filter(!is.na(parameter) & !is.na(type)) 
     })
     
+    load_Param_success <- reactive({
+      req(df_Param()) 
+      df_Param() |> 
+        select(parameter, value, type) |> 
+        purrr::pwalk(par_init)
+      exists("data_source_delim")
+    })
+
     tab_niv <- reactive({
       req(r$auth)
-      req(df_Param())
-      req(func_aux_succes())
+      req(load_Param_success())
+      req(func_aux_success())
       input$upload_param$datapath |> 
         load_range('Valid', 
                    df_Param() |> filter(parameter == "par_rango_niveles") |> pull(value), 
@@ -156,8 +165,8 @@ mod_Lectura_server <- function(id, r){
     
     tab_seg <- reactive({
       req(r$auth)
-      req(df_Param())
-      req(func_aux_succes())
+      req(load_Param_success())
+      req(func_aux_success())
       input$upload_param$datapath |> 
         load_range('Valid', 
                    df_Param() |> filter(parameter == "par_rango_segmentos") |> pull(value), 
@@ -166,8 +175,8 @@ mod_Lectura_server <- function(id, r){
     
     tab_rep <- reactive({
       req(r$auth)
-      req(df_Param())
-      req(func_aux_succes())
+      req(load_Param_success())
+      req(func_aux_success())
       input$upload_param$datapath |> 
         load_range('Valid', 
                    df_Param() |> filter(parameter == "par_rango_reportes") |> pull(value), 
@@ -176,10 +185,9 @@ mod_Lectura_server <- function(id, r){
     
     reading_success <- reactive({
       req(r$auth)   
-      req(func_aux_succes())
-      req(func_utils_succes())
-      req(df_Param())
-      req(tab_rep())      
+      req(func_aux_success())
+      req(func_utils_success())
+      req(tab_niv())      
       req(tab_rep())
       req(tab_seg())
       validate(need(df_Param() |> filter(! type %in% c('list', 'numeric', 'string')) |> plyr::empty(), 
@@ -213,6 +221,7 @@ mod_Lectura_server <- function(id, r){
       req(reading_success())
       df_Param() |> gt() |> 
         cols_label(parameter="Parámetro", value="Valor") 
+      browser() # Debug
     })
     
     output$read_res_datos <- render_gt({

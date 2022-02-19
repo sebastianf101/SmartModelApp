@@ -1,5 +1,3 @@
-# var_instancia <- 1  # Debug
-
 #' The application server-side
 #' 
 #' @param input,output,session Internal parameters for {shiny}. 
@@ -21,9 +19,7 @@ app_server <- function( input, output, session ) {
 
   # golem::cat_dev("Verifico que leyó user_base \n")
   # golem::cat_dev(user_base$user, "\n")
-  sesion_env <- rlang::current_env() # Debug
-  var_sesion <- 2  # Debug
-  
+
   r <- reactiveValues()
   # auth
   # mod_authentication_00_server("authentication_00_ui_1")

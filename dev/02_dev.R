@@ -28,7 +28,7 @@ usethis::use_package("gt")
 usethis::use_package("rlang")
 usethis::use_package("rmarkdown")
 usethis::use_package("magrittr")
-
+usethis::use_package("purrr")
 
 attachment::att_from_rscripts()
 attachment::att_from_rscripts() |> purrr::map(usethis::use_package)
