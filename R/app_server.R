@@ -3,10 +3,14 @@
 #' @param input,output,session Internal parameters for {shiny}. 
 #'     DO NOT REMOVE.
 #' @import shiny
-#' @import dplyr
+#' @import tidyr
 #' @import gt
+#' @import ggplot2
+#' @import purrr
+#' @import rlang
+#' @import dplyr
 #' 
-#' @importFrom rlang .data
+#' @importFrom knitr opts_chunk
 #' @importFrom magrittr %>%
 #' @importFrom shinyauthr login logout
 #' @importFrom vroom vroom

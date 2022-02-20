@@ -1,6 +1,10 @@
 # De https://adv-r.hadley.nz/environments.html#env-recursion
 
-source("~/Trabajo/SmartModel/Funciones auxiliares v11.4.R", verbose = T)
+
+library(magrittr)
+source("~/Trabajo/SmartModel/Dev/TestSmartModelApp/Funciones auxiliares v11.5.R", verbose = TRUE, echo = TRUE)
+
+parse("~/Trabajo/SmartModel/Dev/TestSmartModelApp/Funciones auxiliares v11.5.R", keep.source = TRUE) -> res
 
 source("~/Trabajo/SmartModel/Utils Pres and Reports v2.0.R", verbose = T)
 
@@ -59,3 +63,30 @@ rlang::env_names(sension_env)
 rlang::env_names(topenv())
 
 rlang::env_names(rlang::ns_env("SmartModelApp"))
+
+bt_rs |> 
+  bt_rs_2_tab_bt_sum(score_var = score, score_niv_var = score_niv, 
+                     group_vars = corte, tab_ref_alin = tab_niv) -> res_debug
+
+res_debug |> tab_niv_bt_gt(title=corte) |> as_raw_html()
+
+var_deb <- NA_character_
+SmartModelApp:::string_has_no_data(var_deb)
+
+if (string_has_no_data(par_ids)) print("no tiene datos") else print("si tiene")
+
+if (string_has_no_data(par_ids)) { 
+  df_work <- df_work |> mutate(id=row_number(), .before = 1) 
+  par_ids <- 'id'
+}
+
+dir_dev <- tempdir()
+path_dev <- fs::path(dir_dev, "Cache/Valid_STA/")
+fs::dir_ls(dir_dev)
+fs::dir_ls(fs::path(dir_dev, "Cache/"))
+fs::dir_ls(path_dev)
+fs::dir_exists(path_dev)
+fs::dir_delete(path_dev)
+
+path_knit <- fs::path(dir_dev, "Cache/Valid_STA/")
+if (fs::dir_exists(path_knit)) fs::dir_delete(path_knit)

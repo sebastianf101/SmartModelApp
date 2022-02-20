@@ -39,7 +39,9 @@ mod_Lectura_ui <- function(id){
                     p("Si los archivos no cumplen los formatos especificados se advierte a continuación."), br(),
                     textOutput(ns("read_res_txt")), br(), br(), 
                     p("Nro. de filas leídas del archivo de datos"),
-                    gt_output(ns("read_res_datos"))
+                    gt_output(ns("read_res_datos")), br(), 
+                    p("Apretar el botón para generar y descargar el Reporte de Validación del modelo"), br(), 
+                    downloadButton(ns('downloadReport'), label = "Descargar Reporte")
              ),
              column(8,
                     p("Parámetros cargados"), 
@@ -221,7 +223,6 @@ mod_Lectura_server <- function(id, r){
       req(reading_success())
       df_Param() |> gt() |> 
         cols_label(parameter="Parámetro", value="Valor") 
-      browser() # Debug
     })
     
     output$read_res_datos <- render_gt({
@@ -235,7 +236,34 @@ mod_Lectura_server <- function(id, r){
                            formatter = fmt_number, decimals = 0)
     })
  
-  })
+    output$downloadReport <- downloadHandler(
+      filename = function() { 'Reporte_Valid.html' },
+      content = function(file) {
+        req(reading_success())
+        id <- showNotification("Generando documento. Espere!", duration = NULL, closeButton = FALSE)
+        on.exit(removeNotification(id), add = TRUE)
+        src <- input$template$datapath |> fs::path_tidy()
+        
+        # temporarily switch to the temp dir, in case you do not have write
+        # permission to the current working directory
+        knit_dir <- tempdir()
+        owd <- setwd(knit_dir)
+        on.exit(setwd(owd))
+        file.copy(src, 'report.Rmd', overwrite = TRUE)
+        out <- rmarkdown::render(
+          input = 'report.Rmd',
+          params = list("knit_dir" = knit_dir, "df_Param" = df_Param(), "df_work" = df_work(),
+                        "tab_niv" = tab_niv(), "tab_rep" = tab_rep(), "tab_seg" = tab_seg()),
+          output_format = "html_document")
+        file.rename(out, file)
+        
+        showNotification("Reporte Generado!", duration = 5, closeButton = FALSE)
+        removeNotification(id)
+      }
+    )
+    
+  }) # mod_Lectura_server
+
 }
     
 ## To be copied in the UI
