@@ -227,11 +227,12 @@ mod_Lectura_server <- function(id, r){
     
     output$read_res_datos <- render_gt({
       req(reading_success())
+      df_Param() |> filter(parameter == "par_target") |> pull(value) -> target_var
       df_work() |> 
-        group_by(status = all_of(df_Param() |> filter(parameter == "par_target") |> pull(value))) |> 
+        group_by(.data[[target_var]]) |> 
         count() |> 
         gt(groupname_col = NA) |> 
-        cols_label(status="Target", n="# Mediciones") |> 
+        cols_label(n="# Mediciones") |> 
         grand_summary_rows(columns = n, fns = list(Total = ~sum(.)), 
                            formatter = fmt_number, decimals = 0)
     })

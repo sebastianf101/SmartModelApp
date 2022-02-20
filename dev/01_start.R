@@ -19,7 +19,7 @@
 ## to change the name in the app_sys() function in app_config.R /!\
 ## 
 golem::fill_desc(
-  pkg_name = "SmartModelApp", # The Name of the package containing the App 
+  pkg_name = "SM", # The Name of the package containing the App 
   pkg_title = "Smart Model by BeSmart", # The Title of the package containing the App 
   pkg_description = "Credit Scoring Modelling Automation
     Product Owned by BeSmart Argentina S.A. ", # The Description of the package containing the App 
@@ -56,7 +56,7 @@ golem::use_recommended_deps()
 
 ## Favicon ----
 # If you want to change the favicon (default is golem's one)
-golem::use_favicon(path = "inst/app/www/BeSmartlogo.png") # path = "path/to/ico". Can be an online file. 
+golem::use_favicon(path = "inst/app/www/BeSm.png") # path = "path/to/ico". Can be an online file. 
 golem::remove_favicon()
 
 ## Add helper functions ----

@@ -39,8 +39,6 @@ usethis::use_package("ggplot2")
 usethis::use_package("rsample")
 usethis::use_package("lubridate")
 
-
-
 attachment::att_from_rscripts()
 attachment::att_from_rscripts() |> purrr::map(usethis::use_package)
 

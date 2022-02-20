@@ -90,3 +90,8 @@ fs::dir_delete(path_dev)
 
 path_knit <- fs::path(dir_dev, "Cache/Valid_STA/")
 if (fs::dir_exists(path_knit)) fs::dir_delete(path_knit)
+
+df_Param() |> filter(parameter == "par_target") |> pull(value) -> target_var
+df_work() |> 
+  group_by(.data[[target_var]]) |> 
+  count()
