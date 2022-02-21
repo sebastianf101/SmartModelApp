@@ -2,11 +2,11 @@
 
 
 library(magrittr)
-source("~/Trabajo/SmartModel/Dev/TestSmartModelApp/Funciones auxiliares v11.5.R", verbose = TRUE, echo = TRUE)
+# source("~/Trabajo/SmartModel/Dev/TestSmartModelApp/Funciones auxiliares v11.5.R", verbose = TRUE, echo = TRUE)
 
-parse("~/Trabajo/SmartModel/Dev/TestSmartModelApp/Funciones auxiliares v11.5.R", keep.source = TRUE) -> res
+# parse("~/Trabajo/SmartModel/Dev/TestSmartModelApp/Funciones auxiliares v11.5.R", keep.source = TRUE) -> res
 
-source("~/Trabajo/SmartModel/Utils Pres and Reports v2.0.R", verbose = T)
+# source("~/Trabajo/SmartModel/Utils Pres and Reports v2.0.R", verbose = T)
 
 SmartModelApp:::load_range()
 
@@ -95,3 +95,5 @@ df_Param() |> filter(parameter == "par_target") |> pull(value) -> target_var
 df_work() |> 
   group_by(.data[[target_var]]) |> 
   count()
+
+# docker build -t SmartModel .

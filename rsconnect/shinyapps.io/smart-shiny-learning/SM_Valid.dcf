@@ -1,0 +1,14 @@
+name: SM_Valid
+title: SM_Valid
+username:
+account: smart-shiny-learning
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 5697181
+bundleId: 5600332
+url: https://smart-shiny-learning.shinyapps.io/SM_Valid/
+when: 1645410028.00041
+lastSyncTime: 1645410028.00041
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .dockerignore|.Rbuildignore|data-raw/user_base.R|dev/01_start.R|dev/02_dev.R|dev/03_deploy.R|dev/Aux debug.R|dev/run_dev.R|Dockerfile|man/run_app.Rd|tests/spelling.R
