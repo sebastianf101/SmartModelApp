@@ -62,6 +62,7 @@ mod_Lectura_server <- function(id, r){
     ns <- session$ns
     
     r$reading_success <- FALSE
+    ses_env <- rlang::current_env()
     
     output$file_datos <- render_gt({
       req(r$auth)
@@ -109,7 +110,7 @@ mod_Lectura_server <- function(id, r){
       req(input$func_aux$datapath)
       id <- showNotification("Cargando funciones auxiliares.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-      input$func_aux$datapath |> sys.source(keep.source = F, envir = topenv())
+      input$func_aux$datapath |> sys.source(keep.source = F, envir = ses_env)
       TRUE      
     }) 
 
@@ -118,7 +119,7 @@ mod_Lectura_server <- function(id, r){
       req(input$func_utils$datapath)
       id <- showNotification("Cargando utilidades para reportes.  Espere!", duration = NULL, closeButton = FALSE)
       on.exit(removeNotification(id), add = TRUE)
-      input$func_utils$datapath |> sys.source(keep.source = F, envir = topenv())
+      input$func_utils$datapath |> sys.source(keep.source = F, envir = ses_env)
       TRUE
     })
     
@@ -146,16 +147,16 @@ mod_Lectura_server <- function(id, r){
     
     load_Param_success <- reactive({
       req(df_Param()) 
+      req(func_aux_success())
       df_Param() |> 
         select(parameter, value, type) |> 
-        purrr::pwalk(par_init)
+        purrr::pwalk(par_init, ses_env)
       exists("data_source_delim")
     })
 
     tab_niv <- reactive({
       req(r$auth)
       req(load_Param_success())
-      req(func_aux_success())
       input$upload_param$datapath |> 
         load_range('Valid', 
                    df_Param() |> filter(parameter == "par_rango_niveles") |> pull(value), 

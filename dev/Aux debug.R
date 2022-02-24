@@ -97,3 +97,32 @@ df_work() |>
   count()
 
 # docker build -t SmartModel .
+
+# locking environments
+e <- new.env()
+assign("x", 1, envir = e)
+get("x", envir = e)
+lockEnvironment(e)
+get("x", envir = e)
+assign("x", 2, envir = e)
+try(assign("y", 2, envir = e)) 
+
+rlang::env_names(rlang::ns_env("SmartModelApp"))
+rlang::env_names(rlang::current_env())
+rlang::env_names(rlang::ns_env("SmartModelApp"))
+
+rlang::env_parents(rlang::current_env())
+rlang::caller_env()
+rlang::env_parents(rlang::caller_env())
+
+rlang::env_names(rlang::caller_env())
+
+rlang::env_names(rlang::env_parent(n = 1, env = rlang::current_env()))
+
+rlang::env_names(rlang::env_parent(n = 2, env = rlang::current_env()))
+input$func_aux$datapath |> sys.source(keep.source = F, envir = rlang::env_parent(n = 2, env = rlang::current_env()))
+rlang::env_names(rlang::env_parent(n = 2, env = rlang::current_env()))
+
+req(FALSE) # debug
+
+rlang::env_names(ses_env)
