@@ -1,0 +1,171 @@
+---
+subtitle: "Validation"
+author: "BeSmart"
+date: "`r format(Sys.time(), '%d/%m/%y')`"
+lang: "es-ar"
+output:
+  html_document:
+    keep_md: yes
+    toc: yes
+    toc_depth: 4
+    toc_float: true
+    toc_collapsed: true
+    smooth_scroll: true
+editor_options:
+  chunk_output_type: inline
+params:
+  knit_dir: NA
+  df_Param: NA
+  df_work: NA
+  tab_niv: NA
+  tab_rep: NA
+  tab_seg: NA
+---
+
+```{r Setup, include=F, cache=F}
+# Setup -------------------------------------------------------------------
+
+# Necesario para reproducibilidad en paralelismo
+set.seed(101, "L'Ecuyer")
+par(mfrow=c(1,1))
+ggplot2::theme_set(theme_classic())
+# Con options( warn = 1 ) fuerzo la impresión de todos los warnings.
+# Con options( warn = 2 ) convierto los warnings a errores forzando la parada del proceso.
+options( warn = 1 )
+options(dplyr.summarise.inform = FALSE)
+now = Sys.time()
+```
+
+```{r Setup2, include=FALSE}
+options(tinytex.verbose = TRUE)
+knitr::opts_chunk$set(echo=F, cache=T, cache.lazy = F, cache.path="Cache/Valid_STA/")
+path_knit <- fs::path(params$knit_dir, "Cache/Valid_STA/")
+if (fs::dir_exists(path_knit)) fs::dir_delete(path_knit)
+```
+
+```{r LoadParams}
+params$df_work -> df_work
+params$tab_niv -> tab_niv
+params$tab_seg -> tab_seg
+params$tab_rep -> tab_rep
+df_work |> check_all_reps_vars_in_df(tab_rep) -> vars_rep
+```
+
+```{r Id}
+if (string_has_no_data(par_ids)) { 
+  df_work <- df_work |> mutate(id=row_number(), .before = 1) 
+  par_ids <- 'id'
+}
+```
+
+```{r Complete_sample}
+df_work <- df_work |> mutate(Bad=!!parse_expr(par_target), Good=1-Bad, .after = 1)
+
+df_work |> 
+  range_2_newvar(tab_niv, "score_niv") |> 
+  range_2_newvar(tab_seg, "Segmento") |> 
+  mutate(Target = bad) |> 
+  select(id, Target, Good, Bad, bad, score, score_niv, Segmento, all_of(vars_rep)) -> df_work
+```
+
+---
+title: "`r project_title`"
+---
+
+## Introducción
+
+En este cuaderno vamos a validar niveles de Riesgo según varios cortes especificados. 
+
+Primero se establecen los niveles de riesgo según los valores establecidos en la hoja "Valid" de la planilla de control. En esa hoja además se especifica una variable Segmento y que reportes de van a generar a continuación.  
+
+### Niveles de Riesgo
+
+En la hoja "Valid", celdas `r par_rango_niveles` de la planilla de control se definen los niveles de riesgo con un grupo de reglas.  También se define la tasa de malos máxima para cada nivel. La tasa de malos mínima está dada por la tasa máxima del nivel anterior.  Como primera comprobación de alineación de los scores de la muestra vemos a continuación si la tasa de malos observada se encuentra entre estos dos límites. 
+
+```{r SpecNiv}
+df_work |> group_by(score_niv) |> 
+  summarise(n=n(), br=mean(bad)) |> 
+  mutate(n_p = n/sum(n)) |> 
+  left_join(tab_niv, by = c("score_niv" = "level_name")) |> 
+  arrange(level_order) |> 
+  mutate(Alineado = TM_min <= br & br <= TM_max) |> 
+  select(level_order, score_niv, rule, n, n_p, TM_min, br, TM_max, Alineado) |> gt() |> 
+  cols_label(level_order = "Orden", rule = "Regla", n = "#", n_p = "%",
+             score_niv = "Nivel de Riesgo", br = "Tasa de malos", Alineado = "Tasa alineada",
+             TM_min = gt::html("Tasa de malos<br>mínima"), 
+             TM_max = gt::html("Tasa de malos<br>máxima")) |> 
+  fmt_percent(columns = c(n_p, br, TM_min, TM_max), decimals = 1, locale = "es_AR") |> 
+  fmt_integer(level_order) |> 
+  tab_style(cell_text(color = 'red'),locations = cells_body(columns=br, rows = (Alineado==F))) |> 
+  opt_row_striping() |> 
+  tab_header(title = "Especificación y alineación de niveles de Riesgo")
+```
+
+### Variable Segmento 
+
+En las celdas `r par_rango_segmentos` de la planilla de control tenemos la oportunidad de contruir una variable de Segmento para usar en los reportes. 
+
+```{r SpecSeg}
+df_work |> group_by(Segmento) |> 
+  summarise(n=n(), br=mean(bad)) |> 
+  mutate(n_p = n/sum(n)) |> 
+  left_join(tab_seg, by = c("Segmento" = "level_name")) |> 
+  arrange(level_order) |> 
+  select(level_order, Segmento, rule, n, n_p) |> gt() |> 
+  cols_label(level_order = "Orden", rule = "Regla", n = "#", n_p = "%",
+             Segmento = "Segmento") |> 
+  fmt_percent(columns = c(n_p), decimals = 1, locale = "es_AR") |> 
+  fmt_integer(level_order) |> 
+  opt_row_striping() |> 
+  tab_header(title = "Especificación y distribución de segmentos")
+```
+
+### Reportes especificados
+
+En las celdas `r par_rango_reportes` se definen los reportes a generar. Cada línea es una variables o lista de variables categóricas. Cada combinación de categorias define un reporte. De esta manera se van a generar la siguiente cantidad de reportes. 
+
+```{r SpecRep}
+df_work |> tab_rep_count(tab_rep, report_name) -> tab
+tab |> gt() |> 
+  cols_label(var = "Variables de corte", q_reps = "# Reportes a construir") |> 
+  grand_summary_rows(columns = q_reps, fns = list(Total = ~sum(.)), formatter = fmt_integer)
+```
+
+```{r ctrlMaxRep}
+assertthat::assert_that(sum(tab$q_reps) <= par_cant_reportes, msg = "La cantidad máxima permitida de reportes es {par_cant_reportes}.  Revisar las combinaciones de cortes o cambiar el límite en la planilla de control." |> str_glue()) -> res
+```
+
+
+## Alineación de Niveles de Score
+
+En las siguientes validaciones de los niveles de score vamos a comprobar la alineación del modelo en los cortes especificados. Esto es, vamos a verificar que, en cada tabla de performance, la tasa de malos observada se encuentra dentro de los límites definidos por los niveles de riesgo especificados. 
+
+### Validación por el método Bootstrap. 
+
+Además de verificar la alineación en cada corte vamos a aplicar el método bootstrap para calcular el % de veces en que las submuestras están alineadas y para obtener un intervalo de confianza alrededor del KS.
+
+En detalle, se toman `r par_times` - según el parámetro `par_times:` -, submuestras con reemplazo.  Observamos las tasas de malos y el KS.  La columna `% veces Alineado` cuenta la proporción de tablas alineadas de las submuestras. Si es menor al 95% la subrayamos en rojo. Luego calculamos los cuantiles 2.5% y 97.5% de la distribución de los KS para establecer un clásico intervalo de confianza del 95%.  
+
+## Reportes 
+
+```{r Boot}
+df_work |> rsample::bootstraps(times = par_times, apparent = T) -> bt_rs
+```
+
+```{r ManyReps, results='asis'}
+for(corte in tab_rep$report_name) {
+  
+  cat("\n") 
+  cat("###", "x", corte, "\n") # Create second level headings with the names.
+  
+  bt_rs |> 
+    bt_rs_2_tab_bt_sum(score_var = score, score_niv_var = score_niv, 
+                              group_vars = corte, tab_ref_alin = tab_niv) |> 
+    tab_niv_bt_gt(title=corte) |> cols_hide(columns = c(S_Min, S_Prom, S_Max)) |> 
+  as_raw_html() |> cat()
+  
+  cat("\n")
+  
+}
+```
+
